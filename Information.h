@@ -10,7 +10,7 @@
 // Basic object details
 #define	ObjectName			"Value-Add Object"
 #define	ObjectAuthor		"Gareth Ben Martin of Dynamic Arcade"
-#define	ObjectCopyright		"Copyright © 2008 Dynamic Arcade"
+#define	ObjectCopyright		"Copyright © 2008-2009 Dynamic Arcade"
 #define	ObjectComment		"Unlimited Alterable Values for all objects"
 #define	ObjectURL			"http://www.dynamicarcade.co.uk"
 #define	ObjectHelp			"Help\\ValueAdd\\ValueAdd.html"
@@ -21,8 +21,8 @@
 // Change N,O,N,E to 4 unique characters (MMF currently still uses this to keep track)
 #define	IDENTIFIER MAKEID(D,A,V,A)
 
-// Version 1.3
-#define	VERSION 130
+// Version 1.04
+#define	VERSION 131
 
 // --------------------
 // Version information
