@@ -11,6 +11,7 @@
 
 // Common Include
 #include	"common.h"
+#include "DynExt.h"
 
 // --------------------
 // GetRunObjectDataSize
@@ -110,7 +111,8 @@ short WINAPI DLLExport HandleRunObject(LPRDATA rdPtr)
 
 	for ( i; i != rdPtr->pVariableMap->end(); )
 	{
-		if (i->first->hoFlags & HOF_DESTROYED)
+		headerObject* pObject = Fixed2Object(rdPtr, i->first);
+		if (!pObject || pObject->hoFlags & HOF_DESTROYED)
 		{
 			i = rdPtr->pVariableMap->erase(i);
 		}
@@ -251,6 +253,7 @@ void WINAPI DLLExport StartApp(mv _far *mV, CRunApp* pApp)
 //		delete pData;
 //		mV->mvSetExtUserData(pApp, hInstLib, NULL);
 //	}
+	InitOiListItemSize(mV);
 }
 
 // -------------------

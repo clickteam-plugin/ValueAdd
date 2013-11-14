@@ -14,23 +14,6 @@
 
 #define TYPE_OBJECT 0x0010
 
-inline long Float2Long(float value) {
-	return *(long *)&value;
-}
-
-inline float Long2Float(long value) {
-	return *(float *)&value;
-}
-
-inline int Object2Fixed(object* o) {
-	return ((o->hoCreationId<<16) + o->hoNumber);
-}
-
-inline object* Fixed2Object(LPRDATA rdPtr, int fixed) {
-	LPOBL objList = rdPtr->rHo.hoAdRunHeader->rhObjectList;
-	return objList[0x0000FFFF&fixed].oblOffset;
-}
-
 // ============================================================================
 //
 // CONDITIONS
@@ -66,7 +49,7 @@ CONDITION(
 		for (CurrentQualToOi; CurrentQualToOi->qoiOiList >= 0;
 			CurrentQualToOi = PtrAddBytes(CurrentQualToOi, 4) )
 		{
-			LPOIL CurrentOi = OiList + CurrentQualToOi->qoiOiList; //get a pointer to the objectInfo for this object in the qualifier
+			LPOIL CurrentOi = GetOILPtr(OiList, CurrentQualToOi->qoiOiList); //get a pointer to the objectInfo for this object in the qualifier
 			if ( CurrentOi->oilNObjects <= 0 ) //skip if there are none of the object
 				continue;
 
@@ -91,7 +74,7 @@ CONDITION(
 			}
 			for(int i = 0; i < iCount; i++)
 			{
-				variable_map::iterator it = rdPtr->pVariableMap->find( CurrentObject );
+				variable_map::iterator it = rdPtr->pVariableMap->find( Object2Fixed(CurrentObject) );
 				if ( it != rdPtr->pVariableMap->end() )
 				{
 					variables::iterator j = it->second.find( p2 );
@@ -141,13 +124,17 @@ CONDITION(
 				PrevSelected->hoNextSelected = -1;
 				bSelected = true;
 			}
+			else
+			{
+				CurrentOi->oilListSelected = -1;
+			}
 		}
 
 		return bSelected;
 	}
 	else
 	{
-		LPOIL CurrentOi = OiList + p1; //get a pointer to the objectInfo for this object
+		LPOIL CurrentOi = GetOILPtr(OiList, p1); //get a pointer to the objectInfo for this object
 		if ( CurrentOi->oilNObjects <= 0 ) //return if there are none of the object
 			return false;
 
@@ -172,7 +159,7 @@ CONDITION(
 		}
 		for(int i = 0; i < iCount; i++)
 		{
-			variable_map::iterator it = rdPtr->pVariableMap->find( CurrentObject );
+			variable_map::iterator it = rdPtr->pVariableMap->find( Object2Fixed(CurrentObject) );
 			if ( it != rdPtr->pVariableMap->end() )
 			{
 				variables::iterator j = it->second.find( p2 );
@@ -243,16 +230,16 @@ ACTION(
 
 	if ( p1 && !(p1->hoFlags & HOF_DESTROYED) )
 	{
-		variable_map::iterator i = rdPtr->pVariableMap->find(p1);
+		variable_map::iterator i = rdPtr->pVariableMap->find( Object2Fixed(p1) );
 		if ( i == rdPtr->pVariableMap->end() )
 		{
-			i = rdPtr->pVariableMap->insert( pair<object*,variables>(p1,variables()) ).first;
+			i = rdPtr->pVariableMap->insert( objvar_pair(Object2Fixed(p1), variables()) ).first;
 		}
 
 		variables::iterator j = i->second.find(p2);
 		if ( j == i->second.end() )
 		{
-			j = i->second.insert( pair<string,float>(p2,p3) ).first;
+			j = i->second.insert( variable(p2,p3) ).first;
 		}
 		else
 		{
@@ -275,16 +262,16 @@ ACTION(
 
 	if ( p1 && !(p1->hoFlags & HOF_DESTROYED) )
 	{
-		variable_map::iterator i = rdPtr->pVariableMap->find(p1);
+		variable_map::iterator i = rdPtr->pVariableMap->find(Object2Fixed(p1));
 		if ( i == rdPtr->pVariableMap->end() )
 		{
-			i = rdPtr->pVariableMap->insert( pair<object*,variables>(p1,variables()) ).first;
+			i = rdPtr->pVariableMap->insert( objvar_pair(Object2Fixed(p1), variables()) ).first;
 		}
 
 		variables::iterator j = i->second.find(p2);
 		if ( j == i->second.end() )
 		{
-			j = i->second.insert( pair<string,float>(p2,p3) ).first;
+			j = i->second.insert( variable(p2,p3) ).first;
 		}
 		else
 		{
@@ -308,7 +295,7 @@ EXPRESSION(
 	int p1 = ExParam(TYPE_INT);
 	char* p2 = (char*)ExParam(TYPE_STRING);
 	
-	variable_map::iterator i = rdPtr->pVariableMap->find( Fixed2Object(rdPtr,p1) );
+	variable_map::iterator i = rdPtr->pVariableMap->find(p1);
 	if ( i != rdPtr->pVariableMap->end() )
 	{
 		variables::iterator j = i->second.find(p2);

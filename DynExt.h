@@ -18,26 +18,50 @@ inline T* PtrAddBytes(T *ptr, int bytes)
 	return (T*)( (__int8*)ptr + bytes );
 }
 
-__inline double getAlterableValue(LPRO object, int ValueNum)
+// HWA/Unicode handling, courtesy of Yves
+#define EF_ISHWA			112		// Returns TRUE if HWA version (editor and runtime)
+#define EF_ISUNICODE		113		// Returns TRUE if the editor or runtime is in Unicode mode
+#define EF_GETAPPCODEPAGE	114		// Returns the code page of the application
+
+extern int oiListItemSize;
+void InitOiListItemSize(LPMV pMv);
+#define GetOILPtr(oiListPtr,oiListIndex) PtrAddBytes(oiListPtr, oiListItemSize * oiListIndex)
+#define NextOILPtr(oiListItemPtr) PtrAddBytes(oiListItemPtr, oiListItemSize)
+
+// Convert a fixed value to an object
+inline headerObject* Fixed2Object(LPRDATA rdPtr, int fixed)
 {
-	rVal* object_rVal = &object->rov;
-
-	if (object_rVal->rvpValues)
+	LPOBL ObjectList = rdPtr->rHo.hoAdRunHeader->rhObjectList;
+	headerObject* pObject = ObjectList[0x0000FFFF&fixed].oblOffset;
+	if (pObject && pObject->hoCreationId == fixed>>16)
 	{
-		CValue & val = object_rVal->rvpValues[ValueNum];
-		if (val.m_type == TYPE_LONG)
-		{
-			return (double)val.m_long;
-		}
-		else if (val.m_type == TYPE_DOUBLE)
-		{
-			return val.m_double;
-		}
+		return pObject;
 	}
-
-	// unsupported version, value type or no alt values present.
-	return 0;
+	else
+	{
+		return NULL;
+	}
 }
+
+// Convert an object to a fixed value
+inline int Object2Fixed(headerObject* object)
+{
+	return (object->hoCreationId<<16) + object->hoNumber;
+}
+
+inline long Float2Long(float value)
+{
+	return *(long*)&value;
+}
+
+inline float Long2Float(long value)
+{
+	return *(float*)&value;
+}
+
+////
+
+double getAlterableValue(LPRO object, int ValueNum);
 
 /*struct AltVal
 {
@@ -48,44 +72,10 @@ __inline double getAlterableValue(LPRO object, int ValueNum)
 		long LongValue;
 		double DoubleValue;
 	};
-};*/
+};
 
-/*__inline double getAlterableValue(LPRO object, int ValueNum)
-{
-	DWORD MMFVersion = object->roHo.hoAdRunHeader->rh4.rh4Mv->mvGetVersion();
-
-	rVal* object_rVal = &object->rov;
-
-	if (((MMFVersion & MMFVERSION_MASK) <= MMFVERSION_20) && ((MMFVersion & MMFBUILD_MASK) < 243))
-	{
-		if (object_rVal->rvValuesType[ValueNum] == TYPE_LONG)
-		{
-			return (double)object_rVal->rvValues[ValueNum];
-		}
-		else if (object_rVal->rvValuesType[ValueNum] == TYPE_FLOAT)
-		{
-			return (double)UNPACK_FLOAT(object_rVal->rvValues[ValueNum]);
-		}
-	}
-	else if (((MMFVersion & MMFVERSION_MASK) >= MMFVERSION_20) && ((MMFVersion & MMFBUILD_MASK) >= 243))
-	{
-		if (object_rVal->rvValues[0])
-		{
-			AltVal & val = ((AltVal*)(object_rVal->rvValues[0]))[ValueNum];
-			if (val.ValueType == TYPE_LONG)
-			{
-				return (double)val.LongValue;
-			}
-			else if (val.ValueType == TYPE_FLOAT)
-			{
-				return val.DoubleValue;
-			}
-		}
-	}
-
-	// unsupported version, value type or no alt values present.
-	return 0;
-}*/
+double getAlterableValue(LPRO object, int ValueNum);
+*/
 
 ////
 
@@ -140,7 +130,7 @@ struct ParamComp
 	};
 };
 
-ParamComp* GetComparisonParameter(LPRDATA rdPtr)
+inline ParamComp* GetComparisonParameter(LPRDATA rdPtr)
 {
 	eventParam * CurrentParam = rdPtr->rHo.hoCurrentParam;
 //	EVPNEXT(rdPtr->rHo.hoCurrentParam);
@@ -234,62 +224,6 @@ inline bool Param_Comparison_Test(Comparison comparison, double left, double rig
 
 ////
 
-__inline rCom* getrCom(LPRO object)
-{
-	DWORD OEFlags = object->roHo.hoOEFlags;
-	if(!IS_SET(OEFlags, OEFLAG_MOVEMENTS) && !IS_SET(OEFlags, OEFLAG_ANIMATIONS))
-		return 0;
-
-	return (rCom*)((__int8*)object + sizeof(headerObject));
-}
-
-__inline rMvt* getrMvt(LPRO object)
-{
-	DWORD OEFlags = object->roHo.hoOEFlags;
-	if(!IS_SET(OEFlags, OEFLAG_MOVEMENTS))
-		return 0;
-
-	return (rMvt*)((__int8*)object + sizeof(headerObject) + sizeof(rCom));
-}
-
-__inline rAni* getrAni(LPRO object)
-{
-	DWORD OEFlags = object->roHo.hoOEFlags;
-	if(!IS_SET(OEFlags, OEFLAG_ANIMATIONS))
-		return 0;
-
-	return (rAni*)((__int8*)object + sizeof(headerObject) + sizeof(rCom) +
-		(IS_SET(OEFlags, OEFLAG_MOVEMENTS) ? sizeof(rMvt) : 0));
-}
-
-__inline rSpr* getrSpr(LPRO object)
-{
-	DWORD OEFlags = object->roHo.hoOEFlags;
-	if(!IS_SET(OEFlags, OEFLAG_SPRITES))
-		return 0;
-
-	return (rSpr*)((__int8*)object + sizeof(headerObject) +
-		((IS_SET(OEFlags, OEFLAG_MOVEMENTS) ||
-		 IS_SET(OEFlags, OEFLAG_ANIMATIONS)) ? sizeof(rCom) : 0) +
-		(IS_SET(OEFlags, OEFLAG_MOVEMENTS) ? sizeof(rMvt) : 0) +
-		(IS_SET(OEFlags, OEFLAG_ANIMATIONS) ? sizeof(rAni) : 0));
-}
-
-__inline rVal* getrVal(LPRO object)
-{
-	DWORD OEFlags = object->roHo.hoOEFlags;
-	if(!IS_SET(OEFlags, OEFLAG_VALUES))
-		return 0;
-
-	return (rVal*)((__int8*)object + sizeof(headerObject) +
-		((IS_SET(OEFlags, OEFLAG_MOVEMENTS) ||
-		 IS_SET(OEFlags, OEFLAG_ANIMATIONS)) ? sizeof(rCom) : 0) +
-		(IS_SET(OEFlags, OEFLAG_MOVEMENTS) ? sizeof(rMvt) : 0) +
-		(IS_SET(OEFlags, OEFLAG_ANIMATIONS) ? sizeof(rAni) : 0) +
-		(IS_SET(OEFlags, OEFLAG_SPRITES) ? sizeof(rSpr) : 0));
-}
-
-////
 __inline rCom* getrCom(headerObject* object)
 {
 	DWORD OEFlags = object->hoOEFlags;
