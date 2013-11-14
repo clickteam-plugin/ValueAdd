@@ -229,6 +229,145 @@ short WINAPI DLLExport ContinueRunObject(LPRDATA rdPtr)
 	return 0;
 }
 
+// -----------------
+// SaveRunObject
+// -----------------
+// Saves the object to disk
+// 
+BOOL WINAPI SaveRunObject(LPRDATA rdPtr, HANDLE hf)
+{
+	BOOL bOK = FALSE;
+
+#ifndef VITALIZE
+
+	do
+	{
+		DWORD dwBytesWritten;
+		BOOL WriteSuccess;
+
+		WORD SaveVersion = SAVEDATAVERSION;
+		WriteSuccess = WriteFile(hf, &SaveVersion, sizeof(SaveVersion), &dwBytesWritten, NULL);
+		if (!WriteSuccess) break;
+
+		WORD SavedObjects = rdPtr->pVariableMap->size();
+		WriteSuccess = WriteFile(hf, &SavedObjects, sizeof(SavedObjects), &dwBytesWritten, NULL);
+		if (!WriteSuccess) break;
+
+		variable_map::iterator i = rdPtr->pVariableMap->begin();
+		for (i; i != rdPtr->pVariableMap->end(); i++)
+		{
+			unsigned int ObjectID = i->first;
+			WriteSuccess = WriteFile(hf, &ObjectID, sizeof(ObjectID), &dwBytesWritten, NULL);
+			if (!WriteSuccess) break;
+
+			WORD SavedValues = i->second.size();
+			WriteSuccess = WriteFile(hf, &SavedValues, sizeof(SavedValues), &dwBytesWritten, NULL);
+			if (!WriteSuccess) break;
+
+			variables::iterator j = i->second.begin();
+			for (j; j != i->second.end(); j++)
+			{
+				WORD ValueNameLength = j->first.size();
+				WriteSuccess = WriteFile(hf, &ValueNameLength, sizeof(ValueNameLength), &dwBytesWritten, NULL);
+				if (!WriteSuccess) break;
+
+				const char* ValueName = j->first.c_str();
+				WriteSuccess = WriteFile(hf, ValueName, ValueNameLength, &dwBytesWritten, NULL);
+				if (!WriteSuccess) break;
+
+				float Value = j->second;
+				WriteSuccess = WriteFile(hf, &Value, sizeof(Value), &dwBytesWritten, NULL);
+				if (!WriteSuccess) break;
+			}
+		}
+		if (!WriteSuccess) break;
+
+		bOK = TRUE;
+	}
+	while(false);
+
+#endif // VITALIZE
+
+	return bOK;
+}
+
+// -----------------
+// LoadRunObject
+// -----------------
+// Loads the object from disk
+// 
+BOOL WINAPI LoadRunObject(LPRDATA rdPtr, HANDLE hf)
+{            
+	BOOL bOK=FALSE;
+
+#ifndef VITALIZE
+
+	do
+	{
+		DWORD dwBytesRead;
+		BOOL ReadSuccess;
+
+		WORD SaveVersion;
+		ReadSuccess = ReadFile(hf, &SaveVersion, sizeof(SaveVersion), &dwBytesRead, NULL);
+		if (!ReadSuccess) break;
+
+		if (SaveVersion != SAVEDATAVERSION)
+		{
+			ReadSuccess = false;
+			break;
+		}
+
+		WORD SavedObjects;
+		ReadSuccess = ReadFile(hf, &SavedObjects, sizeof(SavedObjects), &dwBytesRead, NULL);
+		if (!ReadSuccess) break;
+
+		rdPtr->pVariableMap->clear();
+
+		variable_map::iterator it = rdPtr->pVariableMap->begin();
+		for (int i = 0; i < SavedObjects; i++)
+		{
+			unsigned int ObjectID;
+			ReadSuccess = ReadFile(hf, &ObjectID, sizeof(ObjectID), &dwBytesRead, NULL);
+			if (!ReadSuccess) break;
+
+			it = rdPtr->pVariableMap->insert( it, objvar_pair(ObjectID, variables()) );
+
+			WORD SavedValues;
+			ReadSuccess = ReadFile(hf, &SavedValues, sizeof(SavedValues), &dwBytesRead, NULL);
+			if (!ReadSuccess) break;
+
+			variables::iterator jt = it->second.begin();
+			for (int j = 0; j < SavedValues; j++)
+			{
+				WORD ValueNameLength;
+				ReadSuccess = ReadFile(hf, &ValueNameLength, sizeof(ValueNameLength), &dwBytesRead, NULL);
+				if (!ReadSuccess) break;
+
+				string ValueName;
+				ValueName.resize(ValueNameLength);
+				ReadSuccess = ReadFile(hf, &ValueName[0], ValueNameLength, &dwBytesRead, NULL);
+				if (!ReadSuccess) break;
+
+				float Value;
+				ReadSuccess = ReadFile(hf, &Value, sizeof(Value), &dwBytesRead, NULL);
+				if (!ReadSuccess) break;
+
+				jt = it->second.insert( jt, variable(ValueName, Value) );
+			}
+		}
+		if (!ReadSuccess) break;
+
+		bOK = TRUE;
+	}
+	while(false);
+
+#endif // VITALIZE
+
+	return bOK; 
+}
+
+
+
 
 // ============================================================================
 //

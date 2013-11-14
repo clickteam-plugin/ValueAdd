@@ -106,4 +106,7 @@ EXPORTS
 	GetDebugItem			@111
 	EditDebugItem			@112
 
-	GetRegID				@113
+	SaveRunObject			@113
+	LoadRunObject			@114
+
+	GetRegID				@115

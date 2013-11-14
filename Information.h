@@ -21,8 +21,10 @@
 // Change N,O,N,E to 4 unique characters (MMF currently still uses this to keep track)
 #define	IDENTIFIER MAKEID(D,A,V,A)
 
-// Version 1.07.0
-#define	VERSION 170
+// Version 1.08.0
+#define	VERSION 180
+
+#define	SAVEDATAVERSION 1
 
 // --------------------
 // Version information
