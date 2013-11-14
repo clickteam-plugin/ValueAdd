@@ -19,16 +19,24 @@ typedef rRundata * LPRRDATA;
 // you should store it here
 
 typedef headerObject object;
-typedef hash_map<string,float> variables;
-typedef pair<string,float> variable;
+typedef hash_map<string,float> float_vars;
+typedef pair<string,float> float_var;
+typedef hash_map<string,string> string_vars;
+typedef pair<string,string> string_var;
+struct variables
+{
+	float_vars floats;
+	string_vars strings;
+};
+
 typedef hash_map<unsigned int,variables> variable_map;
 typedef pair<unsigned int,variables> objvar_pair;
 typedef struct tagRDATA
 {
 	#include "MagicRDATA.h"
-	
+
 	variable_map * pVariableMap;
-	
+
 } RUNDATA;
 typedef	RUNDATA	* LPRDATA;
 

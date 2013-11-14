@@ -203,6 +203,28 @@ inline bool Param_Comparison_Test(Comparison comparison, double left, double rig
 	}
 }
 
+inline bool Param_Comparison_Test(Comparison comparison, const char* left, const char* right)
+{
+	int result = strcmp(left, right);
+	switch(comparison)
+	{
+	case PC_EQUAL:
+		return result == 0;
+	case PC_DIFFERENT:
+		return result != 0;
+	case PC_LOWER_OR_EQUAL:
+		return result <= 0;
+	case PC_LOWER:
+		return result < 0;
+	case PC_GREATER_OR_EQUAL:
+		return result >= 0;
+	case PC_GREATER:
+		return result > 0;
+	default:
+		return 0; // ERROR!!!
+	}
+}
+
 ////
 
 /*double GetDoubleParameter(LPRDATA rdPtr)

@@ -260,12 +260,12 @@ BOOL WINAPI SaveRunObject(LPRDATA rdPtr, HANDLE hf)
 			WriteSuccess = WriteFile(hf, &ObjectID, sizeof(ObjectID), &dwBytesWritten, NULL);
 			if (!WriteSuccess) break;
 
-			WORD SavedValues = i->second.size();
+			WORD SavedValues = i->second.floats.size();
 			WriteSuccess = WriteFile(hf, &SavedValues, sizeof(SavedValues), &dwBytesWritten, NULL);
 			if (!WriteSuccess) break;
 
-			variables::iterator j = i->second.begin();
-			for (j; j != i->second.end(); j++)
+			float_vars::iterator j = i->second.floats.begin();
+			for (j; j != i->second.floats.end(); j++)
 			{
 				WORD ValueNameLength = j->first.size();
 				WriteSuccess = WriteFile(hf, &ValueNameLength, sizeof(ValueNameLength), &dwBytesWritten, NULL);
@@ -277,6 +277,30 @@ BOOL WINAPI SaveRunObject(LPRDATA rdPtr, HANDLE hf)
 
 				float Value = j->second;
 				WriteSuccess = WriteFile(hf, &Value, sizeof(Value), &dwBytesWritten, NULL);
+				if (!WriteSuccess) break;
+			}
+
+			WORD SavedStrings = i->second.strings.size();
+			WriteSuccess = WriteFile(hf, &SavedStrings, sizeof(SavedStrings), &dwBytesWritten, NULL);
+			if (!WriteSuccess) break;
+
+			string_vars::iterator js = i->second.strings.begin();
+			for (js; js != i->second.strings.end(); js++)
+			{
+				WORD ValueNameLength = js->first.size();
+				WriteSuccess = WriteFile(hf, &ValueNameLength, sizeof(ValueNameLength), &dwBytesWritten, NULL);
+				if (!WriteSuccess) break;
+
+				const char* ValueName = js->first.c_str();
+				WriteSuccess = WriteFile(hf, ValueName, ValueNameLength, &dwBytesWritten, NULL);
+				if (!WriteSuccess) break;
+
+				DWORD StringValueLength = js->second.size();
+				WriteSuccess = WriteFile(hf, &StringValueLength, sizeof(StringValueLength), &dwBytesWritten, NULL);
+				if (!WriteSuccess) break;
+
+				const char* StringValue = js->second.c_str();
+				WriteSuccess = WriteFile(hf, StringValue, StringValueLength, &dwBytesWritten, NULL);
 				if (!WriteSuccess) break;
 			}
 		}
@@ -311,7 +335,8 @@ BOOL WINAPI LoadRunObject(LPRDATA rdPtr, HANDLE hf)
 		ReadSuccess = ReadFile(hf, &SaveVersion, sizeof(SaveVersion), &dwBytesRead, NULL);
 		if (!ReadSuccess) break;
 
-		if (SaveVersion != SAVEDATAVERSION)
+		if (SaveVersion < SAVEDATAVERSION_MINSUPPORTED ||
+			SaveVersion > SAVEDATAVERSION)
 		{
 			ReadSuccess = false;
 			break;
@@ -336,7 +361,7 @@ BOOL WINAPI LoadRunObject(LPRDATA rdPtr, HANDLE hf)
 			ReadSuccess = ReadFile(hf, &SavedValues, sizeof(SavedValues), &dwBytesRead, NULL);
 			if (!ReadSuccess) break;
 
-			variables::iterator jt = it->second.begin();
+			float_vars::iterator jt = it->second.floats.begin();
 			for (int j = 0; j < SavedValues; j++)
 			{
 				WORD ValueNameLength;
@@ -352,7 +377,38 @@ BOOL WINAPI LoadRunObject(LPRDATA rdPtr, HANDLE hf)
 				ReadSuccess = ReadFile(hf, &Value, sizeof(Value), &dwBytesRead, NULL);
 				if (!ReadSuccess) break;
 
-				jt = it->second.insert( jt, variable(ValueName, Value) );
+				jt = it->second.floats.insert( jt, float_var(ValueName, Value) );
+			}
+
+			if (SaveVersion >= SAVEDATAVERSION_STRINGSADDED)
+			{
+				WORD SavedStrings;
+				ReadSuccess = ReadFile(hf, &SavedStrings, sizeof(SavedStrings), &dwBytesRead, NULL);
+				if (!ReadSuccess) break;
+
+				string_vars::iterator jt = it->second.strings.begin();
+				for (int j = 0; j < SavedStrings; j++)
+				{
+					WORD ValueNameLength;
+					ReadSuccess = ReadFile(hf, &ValueNameLength, sizeof(ValueNameLength), &dwBytesRead, NULL);
+					if (!ReadSuccess) break;
+
+					string ValueName;
+					ValueName.resize(ValueNameLength);
+					ReadSuccess = ReadFile(hf, &ValueName[0], ValueNameLength, &dwBytesRead, NULL);
+					if (!ReadSuccess) break;
+
+					DWORD StringValueLength;
+					ReadSuccess = ReadFile(hf, &StringValueLength, sizeof(StringValueLength), &dwBytesRead, NULL);
+					if (!ReadSuccess) break;
+
+					string StringValue;
+					StringValue.resize(StringValueLength);
+					ReadSuccess = ReadFile(hf, &StringValue[0], StringValueLength, &dwBytesRead, NULL);
+					if (!ReadSuccess) break;
+
+					jt = it->second.strings.insert( jt, string_var(ValueName, StringValue) );
+				}
 			}
 		}
 		if (!ReadSuccess) break;
