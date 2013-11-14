@@ -241,20 +241,23 @@ ACTION(
 	char* p2 = (char*)Param(TYPE_STRING);
 	float p3 = Long2Float(CNC_GetFloatParameter(rdPtr));
 
-	variable_map::iterator i = rdPtr->pVariableMap->find(p1);
-	if ( i == rdPtr->pVariableMap->end() )
+	if ( p1 && !(p1->hoFlags & HOF_DESTROYED) )
 	{
-		i = rdPtr->pVariableMap->insert( pair<object*,variables>(p1,variables()) ).first;
-	}
+		variable_map::iterator i = rdPtr->pVariableMap->find(p1);
+		if ( i == rdPtr->pVariableMap->end() )
+		{
+			i = rdPtr->pVariableMap->insert( pair<object*,variables>(p1,variables()) ).first;
+		}
 
-	variables::iterator j = i->second.find(p2);
-	if ( j == i->second.end() )
-	{
-		j = i->second.insert( pair<string,float>(p2,p3) ).first;
-	}
-	else
-	{
-		j->second = p3;
+		variables::iterator j = i->second.find(p2);
+		if ( j == i->second.end() )
+		{
+			j = i->second.insert( pair<string,float>(p2,p3) ).first;
+		}
+		else
+		{
+			j->second = p3;
+		}
 	}
 }
 
@@ -270,20 +273,23 @@ ACTION(
 	float p4 = Long2Float(CNC_GetFloatParameter(rdPtr));
 	p3 += p4 * rdPtr->rHo.hoAdRunHeader->rh2.rh2ActionLoopCount;
 
-	variable_map::iterator i = rdPtr->pVariableMap->find(p1);
-	if ( i == rdPtr->pVariableMap->end() )
+	if ( p1 && !(p1->hoFlags & HOF_DESTROYED) )
 	{
-		i = rdPtr->pVariableMap->insert( pair<object*,variables>(p1,variables()) ).first;
-	}
+		variable_map::iterator i = rdPtr->pVariableMap->find(p1);
+		if ( i == rdPtr->pVariableMap->end() )
+		{
+			i = rdPtr->pVariableMap->insert( pair<object*,variables>(p1,variables()) ).first;
+		}
 
-	variables::iterator j = i->second.find(p2);
-	if ( j == i->second.end() )
-	{
-		j = i->second.insert( pair<string,float>(p2,p3) ).first;
-	}
-	else
-	{
-		j->second = p3;
+		variables::iterator j = i->second.find(p2);
+		if ( j == i->second.end() )
+		{
+			j = i->second.insert( pair<string,float>(p2,p3) ).first;
+		}
+		else
+		{
+			j->second = p3;
+		}
 	}
 }
 

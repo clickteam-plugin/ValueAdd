@@ -13,7 +13,7 @@
 #define	ObjectCopyright		"Copyright © 2008 Dynamic Arcade"
 #define	ObjectComment		"Unlimited Alterable Values for all objects"
 #define	ObjectURL			"http://www.dynamicarcade.co.uk"
-#define	ObjectHelp			"Help\\Value Add\\Value Add.html"
+#define	ObjectHelp			"Help\\ValueAdd\\ValueAdd.html"
 
 // If you register your object with Clickteam, change this to the ID you were given
 #define ObjectRegID			REGID_PRIVATE
@@ -21,8 +21,8 @@
 // Change N,O,N,E to 4 unique characters (MMF currently still uses this to keep track)
 #define	IDENTIFIER MAKEID(D,A,V,A)
 
-// Version 1.2
-#define	VERSION 120
+// Version 1.3
+#define	VERSION 130
 
 // --------------------
 // Version information
