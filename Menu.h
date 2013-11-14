@@ -20,6 +20,7 @@
 #ifdef ACTION_MENU
 
 	ITEM(0,"Set Value")
+	ITEM(1,"Spread Value")
 
 #endif
 

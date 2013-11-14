@@ -142,7 +142,7 @@ short WINAPI DLLExport GetRunObjectInfos(mv _far *mV, fpKpxRunInfos infoPtr)
 	MagicPrefs(infoPtr->editPrefs);
 
 	infoPtr->identifier = IDENTIFIER;
-	infoPtr->version = 1;
+	infoPtr->version = VERSION;
 	
 	return TRUE;
 }

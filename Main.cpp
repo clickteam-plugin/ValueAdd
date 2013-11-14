@@ -258,6 +258,35 @@ ACTION(
 	}
 }
 
+ACTION(
+	/* ID */			1,
+	/* Name */			"%o: Spread Value %2 (+%3) in Ext. Alt. Value %1 of %0",
+	/* Flags */			0,
+	/* Params */			(4,PARAM_OBJECT,"Object",PARAM_STRING,"Extended Alt. Value's Name",PARAM_NUMBER,"Start Value",PARAM_NUMBER,"Step Value")
+) {
+	object* p1 = (object*)Param(TYPE_OBJECT);
+	char* p2 = (char*)Param(TYPE_STRING);
+	float p3 = Long2Float(CNC_GetFloatParameter(rdPtr));
+	float p4 = Long2Float(CNC_GetFloatParameter(rdPtr));
+	p3 += p4 * rdPtr->rHo.hoAdRunHeader->rh2.rh2ActionLoopCount;
+
+	variable_map::iterator i = rdPtr->pVariableMap->find(p1);
+	if ( i == rdPtr->pVariableMap->end() )
+	{
+		i = rdPtr->pVariableMap->insert( pair<object*,variables>(p1,variables()) ).first;
+	}
+
+	variables::iterator j = i->second.find(p2);
+	if ( j == i->second.end() )
+	{
+		j = i->second.insert( pair<string,float>(p2,p3) ).first;
+	}
+	else
+	{
+		j->second = p3;
+	}
+}
+
 // ============================================================================
 //
 // EXPRESSIONS
