@@ -304,7 +304,7 @@ EXPRESSION(
 	/* Flags */			0,
 	/* Params */			(2,EXPPARAM_NUMBER,"Fixed Value of Object",EXPPARAM_STRING,"Extended Alt. Value's Name")
 ) {
-	int p1 = ExParam(TYPE_INT);
+	unsigned int p1 = ExParam(TYPE_INT);
 	char* p2 = (char*)ExParam(TYPE_STRING);
 	
 	variable_map::iterator i = rdPtr->pVariableMap->find(p1);

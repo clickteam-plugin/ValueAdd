@@ -1215,6 +1215,10 @@
 				RelativePath="Resource.h"
 				>
 			</File>
+			<File
+				RelativePath=".\Docs\ValueAdd.html"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="MMF Headers"

@@ -21,8 +21,8 @@ typedef rRundata * LPRRDATA;
 typedef headerObject object;
 typedef hash_map<string,float> variables;
 typedef pair<string,float> variable;
-typedef hash_map<int,variables> variable_map;
-typedef pair<int,variables> objvar_pair;
+typedef hash_map<unsigned int,variables> variable_map;
+typedef pair<unsigned int,variables> objvar_pair;
 typedef struct tagRDATA
 {
 	#include "MagicRDATA.h"

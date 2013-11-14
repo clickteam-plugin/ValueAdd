@@ -29,7 +29,7 @@ void InitOiListItemSize(LPMV pMv);
 #define NextOILPtr(oiListItemPtr) PtrAddBytes(oiListItemPtr, oiListItemSize)
 
 // Convert a fixed value to an object
-inline headerObject* Fixed2Object(LPRDATA rdPtr, int fixed)
+inline headerObject* Fixed2Object(LPRDATA rdPtr, unsigned int fixed)
 {
 	LPOBL ObjectList = rdPtr->rHo.hoAdRunHeader->rhObjectList;
 	headerObject* pObject = ObjectList[0x0000FFFF&fixed].oblOffset;
@@ -44,7 +44,7 @@ inline headerObject* Fixed2Object(LPRDATA rdPtr, int fixed)
 }
 
 // Convert an object to a fixed value
-inline int Object2Fixed(headerObject* object)
+inline unsigned int Object2Fixed(headerObject* object)
 {
 	return (object->hoCreationId<<16) + object->hoNumber;
 }
