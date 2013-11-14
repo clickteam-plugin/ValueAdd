@@ -26,7 +26,10 @@ CONDITION(
 	/* Flags */			EVFLAGS_ALWAYS,
 	/* Params */			(3,PARAM_OBJECT,"Object",PARAM_STRING,"Extended Alt. Value Name",PARAM_COMPARISON,"To Compare Against")
 ) {
-	short p1 = ((eventParam*)Param(TYPE_OBJECT))->evp.evpW.evpW0;
+	// Hack around obscure crash by getting the param data myself instead of tructing Param(TYPE_OBJECT)
+	//short p1 = ((eventParam*)Param(TYPE_OBJECT))->evp.evpW.evpW0;
+	short p1 = rdPtr->rHo.hoCurrentParam->evp.evpW.evpW0; Param(TYPE_OBJECT);
+
 	char* p2 = (char*)Param(TYPE_STRING);
 	ParamComp* p3 = GetComparisonParameter(rdPtr);
 	double p4 = Long2Float(CNC_GetFloatParameter(rdPtr));
@@ -74,46 +77,50 @@ CONDITION(
 			}
 			for(int i = 0; i < iCount; i++)
 			{
+				float value = 0;
 				variable_map::iterator it = rdPtr->pVariableMap->find( Object2Fixed(CurrentObject) );
 				if ( it != rdPtr->pVariableMap->end() )
 				{
 					variables::iterator j = it->second.find( p2 );
-					if ( j != it->second.end() &&
-						Param_Comparison_Test( (Comparison)p3->compType, j->second, p4 ) )
+					if ( j != it->second.end() )
 					{
-						if ( numSelected++ == 0 )
-						{
-							CurrentOi->oilListSelected = CurrentObject->hoNumber; //select the first object
-						}
-						else
-						{
-							PrevSelected->hoNextSelected = CurrentObject->hoNumber;
-						}
-
-						PrevSelected = CurrentObject;
+						value = j->second;
 					}
-
-					if ( prevSelected )
+				}
+				if ( Param_Comparison_Test( (Comparison)p3->compType, value, p4 ) )
+				{
+					if ( numSelected++ == 0 )
 					{
-						if ( CurrentObject->hoNextSelected >= 0 )
-						{
-							CurrentObject = ObjectList[CurrentObject->hoNextSelected].oblOffset;
-						}
-						else
-						{
-							break;
-						}
+						CurrentOi->oilListSelected = CurrentObject->hoNumber; //select the first object
 					}
 					else
 					{
-						if ( CurrentObject->hoNumNext >= 0 )
-						{
-							CurrentObject = ObjectList[CurrentObject->hoNumNext].oblOffset;
-						}
-						else
-						{
-							break;
-						}
+						PrevSelected->hoNextSelected = CurrentObject->hoNumber;
+					}
+
+					PrevSelected = CurrentObject;
+				}
+
+				if ( prevSelected )
+				{
+					if ( CurrentObject->hoNextSelected >= 0 )
+					{
+						CurrentObject = ObjectList[CurrentObject->hoNextSelected].oblOffset;
+					}
+					else
+					{
+						break;
+					}
+				}
+				else
+				{
+					if ( CurrentObject->hoNumNext >= 0 )
+					{
+						CurrentObject = ObjectList[CurrentObject->hoNumNext].oblOffset;
+					}
+					else
+					{
+						break;
 					}
 				}
 			}
@@ -159,45 +166,50 @@ CONDITION(
 		}
 		for(int i = 0; i < iCount; i++)
 		{
+			float value = 0;
 			variable_map::iterator it = rdPtr->pVariableMap->find( Object2Fixed(CurrentObject) );
 			if ( it != rdPtr->pVariableMap->end() )
 			{
 				variables::iterator j = it->second.find( p2 );
-				if ( Param_Comparison_Test( (Comparison)p3->compType, (j != it->second.end()) ? (j->second) : (0.0), p4 ) )
+				if ( j != it->second.end() )
 				{
-					if ( numSelected++ == 0 )
-					{
-						CurrentOi->oilListSelected = CurrentObject->hoNumber; //select the first object
-					}
-					else
-					{
-						PrevSelected->hoNextSelected = CurrentObject->hoNumber;
-					}
-
-					PrevSelected = CurrentObject;
+					value = j->second;
 				}
-
-				if ( prevSelected )
+			}
+			if ( Param_Comparison_Test( (Comparison)p3->compType, value, p4 ) )
+			{
+				if ( numSelected++ == 0 )
 				{
-					if ( CurrentObject->hoNextSelected < 0 )
-					{
-						break;
-					}
-					else
-					{
-						CurrentObject = ObjectList[CurrentObject->hoNextSelected].oblOffset;
-					}
+					CurrentOi->oilListSelected = CurrentObject->hoNumber; //select the first object
 				}
 				else
 				{
-					if ( CurrentObject->hoNumNext < 0 )
-					{
-						break;
-					}
-					else
-					{
-						CurrentObject = ObjectList[CurrentObject->hoNumNext].oblOffset;
-					}
+					PrevSelected->hoNextSelected = CurrentObject->hoNumber;
+				}
+
+				PrevSelected = CurrentObject;
+			}
+
+			if ( prevSelected )
+			{
+				if ( CurrentObject->hoNextSelected < 0 )
+				{
+					break;
+				}
+				else
+				{
+					CurrentObject = ObjectList[CurrentObject->hoNextSelected].oblOffset;
+				}
+			}
+			else
+			{
+				if ( CurrentObject->hoNumNext < 0 )
+				{
+					break;
+				}
+				else
+				{
+					CurrentObject = ObjectList[CurrentObject->hoNumNext].oblOffset;
 				}
 			}
 		}
